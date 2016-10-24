@@ -143,8 +143,9 @@ publish/
 # TODO: Un-comment the next line if you do not want to checkin
 # your web deploy settings because they may include unencrypted
 # passwords
-#*.pubxml
+*.pubxml
 *.publishproj
+web.config
 
 # NuGet Packages
 *.nupkg
