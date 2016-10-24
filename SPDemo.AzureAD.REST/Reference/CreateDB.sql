@@ -1,0 +1,26 @@
+﻿USE [master]
+GO
+
+CREATE DATABASE [SPDemoAzureADREST] 
+GO
+
+USE [SPDemoAzureADREST]
+GO
+
+SET ANSI_NULLS ON 
+GO
+ 
+SET QUOTED_IDENTIFIER ON 
+GO
+ 
+CREATE TABLE [dbo].[__MigrationHistory] ([MigrationId]    NVARCHAR (150)  NOT NULL PRIMARY KEY, [ContextKey]     NVARCHAR (300)  NOT NULL, [Model] VARBINARY (MAX) NOT NULL, [ProductVersion] NVARCHAR (32)   NOT NULL); 
+GO
+ 
+CREATE TABLE [dbo].[IssuingAuthorityKeys] ([Id] NVARCHAR (128) PRIMARY KEY NOT NULL); 
+GO
+ 
+CREATE TABLE [dbo].[Tenants] ([Id] NVARCHAR (128) NOT NULL PRIMARY KEY); 
+GO
+ 
+CREATE TABLE [dbo].[SignupTokens] ([Id] NVARCHAR (255) NOT NULL PRIMARY KEY, [ExpirationDate] DATETIMEOFFSET(3)); 
+GO
