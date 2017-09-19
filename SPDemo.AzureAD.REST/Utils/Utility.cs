@@ -163,16 +163,6 @@ namespace SPDemo.AzureAD.REST.Utils
                     var objectNode = (from n in doc.Descendants("Attribute") where n.Attribute("Name").Value == "http://schemas.microsoft.com/identity/claims/objectidentifier" select n).FirstOrDefault();
                     var objectId = objectNode.Value;
 
-                    try
-                    {
-                        //Insert code to retrieve access token
-                        //OfficeDev: https://github.com/OfficeDev/TrainingContent/blob/master/O3651/O3651-5%20Getting%20started%20with%20Office%20365%20APIs
-                    }
-                    catch (System.Exception ex)
-                    {
-
-                    }
-
                     ro.TenantId = tenantId;
                     ro.EmailAddress = emailAddress;
                     ro.DisplayName = displayName;
