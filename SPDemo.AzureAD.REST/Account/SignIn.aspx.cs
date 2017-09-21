@@ -21,12 +21,23 @@ namespace SPDemo.AzureAD.REST.Account
             {
                 HttpCookie hc = new HttpCookie("ContentType");
                 hc = HttpContext.Current.Request.Cookies[Request.Url.GetLeftPart(UriPartial.Authority)];
+
                 if (hc != null)
                 {
                     if (hc.Value == "authenticated")
                         AuthenticateUser();
                     else
-                        signinContent.Visible = true;
+                    {
+                        //Handle IsAuthenticated bug from Azure app redirection page
+                        if (HttpContext.Current.Request.UrlReferrer.ToString().Contains("account.activedirectory.windowsazure.com"))
+                        {
+                            AuthenticateUser();
+                        }
+                        else
+                        {
+                            signinContent.Visible = true;
+                        }
+                    }
                 }
                 else
                 {
@@ -38,11 +49,7 @@ namespace SPDemo.AzureAD.REST.Account
         protected void btnSignIn_Click(object sender, EventArgs e)
         {
             //Set cookie
-            DateTime dt = DateTime.Now;
-            HttpCookie licCookie = new HttpCookie(Request.Url.GetLeftPart(UriPartial.Authority));
-            licCookie.Value = "authenticated";
-            licCookie.Expires = dt.AddMinutes(86400);
-            HttpContext.Current.Response.Cookies.Add(licCookie);
+            SetCookie();
 
             //Authenticate
             AuthenticateUser();
@@ -63,7 +70,17 @@ namespace SPDemo.AzureAD.REST.Account
                 returnUrl: callbackUrl,
                 rememberMeSet: false);
             signInRequest.SetParameter("wtrealm", IdentityConfig.Realm ?? config.Realm);
+            SetCookie();
             Response.Redirect(signInRequest.RequestUrl.ToString());
+        }
+
+        protected void SetCookie()
+        {
+            DateTime dt = DateTime.Now;
+            HttpCookie licCookie = new HttpCookie(Request.Url.GetLeftPart(UriPartial.Authority));
+            licCookie.Value = "authenticated";
+            licCookie.Expires = dt.AddMinutes(86400);
+            HttpContext.Current.Response.Cookies.Add(licCookie);
         }
     }
 }
