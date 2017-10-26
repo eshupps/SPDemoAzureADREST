@@ -145,8 +145,9 @@ publish/
 # passwords
 *.pubxml
 *.publishproj
-web.debug.config
-web.release.config
+Web.Debug.config
+Web.Release.config
+Web.AzureSite.config
 
 # NuGet Packages
 *.nupkg

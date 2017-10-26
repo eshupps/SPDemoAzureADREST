@@ -18,7 +18,7 @@ namespace SPDemo.AzureAD.REST.Utils
     public class AuthManager
     {
         private static readonly string tenantId = ConfigurationManager.AppSettings["ida:TenantId"];
-        private const string LoginUrl = "https://login.windows.net/common";
+        private const string LoginUrl = "https://login.windows.net/";
         private static readonly string AppPrincipalId = ConfigurationManager.AppSettings["ida:ClientId"];
         private static readonly string AppKey = ConfigurationManager.AppSettings["ida:ClientSecret"];
 
@@ -28,8 +28,8 @@ namespace SPDemo.AzureAD.REST.Utils
 
             try
             {
-                //string tenantId = ClaimsPrincipal.Current.FindFirst(TenantIdClaimType).Value;
-                AuthenticationContext authContext = new AuthenticationContext(LoginUrl);
+                string tenantId = ClaimsPrincipal.Current.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid").Value;
+                AuthenticationContext authContext = new AuthenticationContext(string.Format("{0}{1}", LoginUrl, tenantId));
                 authContext.TokenCache.Clear();
                 ClientCredential credential = new ClientCredential(AppPrincipalId, AppKey);
                 AuthenticationResult assertionCredential = await authContext.AcquireTokenAsync(EndpointUrl, credential);

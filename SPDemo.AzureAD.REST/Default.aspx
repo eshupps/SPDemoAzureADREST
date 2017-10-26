@@ -9,10 +9,13 @@
     </div>
 
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-12" style="width:100%;">
             <h2>Calendar Events</h2>
         </div>
-        <div class="col-md-4 contentDiv" id="ContentDiv" runat="server">
+        <div class="col-md-12 contentDiv" id="ContentDiv" runat="server" style="width:100%;">
+            
+        </div>
+        <div class="col-md-12" id="responseDiv" runat="server" style="width:100%;">
             
         </div>
     </div>

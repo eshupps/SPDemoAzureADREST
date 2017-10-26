@@ -6,6 +6,7 @@ using System.IdentityModel.Services.Configuration;
 using System.Linq;
 using System.Web;
 using System.Web.UI;
+using System.Text;
 using System.Web.UI.WebControls;
 using SPDemo.AzureAD.REST.Utils;
 
@@ -25,11 +26,10 @@ namespace SPDemo.AzureAD.REST
                 DisplayCalendar();
             }
 
-            string consentUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?response_type=code&client_id={0}&scope=https%3A%2F%2Fgraph.windows.net&redirect_uri={1}&prompt=admin_consent";
+            string tenantId = System.Security.Claims.ClaimsPrincipal.Current.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid").Value;
             WsFederationConfiguration config = FederatedAuthentication.FederationConfiguration.WsFederationConfiguration;
             string callbackUrl = Request.Url.GetLeftPart(UriPartial.Authority) + Response.ApplyAppPathModifier("~/");
-            //string authUrl = string.Format(consentUrl, ConfigurationManager.AppSettings["ida:ClientId"], callbackUrl);
-            string authUrl = string.Format("https://login.windows.net/common/adminconsent?client_id={0}&state={1}&redirect_uri={2}", ConfigurationManager.AppSettings["ida:ClientId"], "admin", callbackUrl);
+            string authUrl = string.Format("https://login.windows.net/{0}/adminconsent?client_id={1}&state={2}&redirect_uri={3}", tenantId, ConfigurationManager.AppSettings["ida:ClientId"], "12345", callbackUrl);
             authLink.NavigateUrl = authUrl;
         }
 
@@ -48,27 +48,54 @@ namespace SPDemo.AzureAD.REST
 
         protected void DisplayCalendar()
         {
-            string endpointUrl = "https://graph.microsoft.com";
-            string userId = HttpContext.Current.User.Identity.Name;
-            string targetUrl = String.Format("/v1.0/users/{0}/events?$select=Subject,Organizer,Start,End", userId);
-
-            List<CalendarObject> _events = CalendarManager.GetCalendarItems(endpointUrl, targetUrl);
-
-            if (_events != null)
+            try
             {
-                foreach (CalendarObject _event in _events)
+                string endpointUrl = "https://graph.microsoft.com";
+                string userId = HttpContext.Current.User.Identity.Name;
+                string tenantId = System.Security.Claims.ClaimsPrincipal.Current.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid").Value;
+                //string targetUrl = String.Format("/v1.0/{0}/users/{1}/events?$select=Subject,Organizer,Start,End", tenantId, userId);
+                string targetUrl = String.Format("/v1.0/users/{0}/events?$select=Subject,Organizer,Start,End", userId);
+                //List<CalendarObject> _events = CalendarManager.GetCalendarItems(endpointUrl, targetUrl);
+                string _requestUrl = string.Format("{0}{1}", endpointUrl, targetUrl);
+                AuthManager am = new AuthManager();
+                System.Threading.Tasks.Task<string> _task = System.Threading.Tasks.Task.Run(async () => await am.GetAuthorizedResponse(endpointUrl, _requestUrl));
+                _task.Wait();
+                string _result = _task.Result;
+                //responseDiv.InnerText = _result;
+
+                if (!string.IsNullOrEmpty(_result))
                 {
-                    string _start = DateTime.SpecifyKind(DateTime.Parse(_event.Start.DateTime), DateTimeKind.Utc).ToLocalTime().ToString("MM/dd/yyyy hh:mm:ss");
-                    string _end = DateTime.SpecifyKind(DateTime.Parse(_event.End.DateTime), DateTimeKind.Utc).ToLocalTime().ToString("MM/dd/yyyy hh:mm:ss");
+                    var _obj = Newtonsoft.Json.JsonConvert.DeserializeObject<CalendarResponse>(_result);
+                    List<CalendarObject> _events = _obj.value;
 
-                    string html = "<div class='eventContainer'>"
-                        + "<div class='eventSubject'>" + _event.Subject + "</div>"
-                        + "<div class='eventDate'>" + _start + "</div>"
-                        + "<div class='eventDate'>" + _end + "</div>"
-                        + "</div>";
+                    if (_events != null)
+                    {
+                        StringBuilder html = new StringBuilder();
 
-                    ContentDiv.InnerHtml = html;
+                        foreach (CalendarObject _event in _events)
+                        {
+                            string _start = DateTime.SpecifyKind(DateTime.Parse(_event.Start.DateTime), DateTimeKind.Utc).ToLocalTime().ToString("MM/dd/yyyy hh:mm:ss");
+                            string _end = DateTime.SpecifyKind(DateTime.Parse(_event.End.DateTime), DateTimeKind.Utc).ToLocalTime().ToString("MM/dd/yyyy hh:mm:ss");
+
+                            html.Append("<div class='eventWrapper'><div class='eventContainer'>"
+                                + "<div class='eventSubject'>" + _event.Subject + "</div>"
+                                + "<div class='eventDate'>" + _start + "</div>"
+                                + "<div class='eventDate'>" + _end + "</div>"
+                                + "</div></div>");
+                        }
+
+                        ContentDiv.InnerHtml = html.ToString();
+
+                    }
                 }
+                else
+                {
+                    responseDiv.InnerText = "Query result is null or empty.";
+                }
+            }
+            catch (System.Exception ex)
+            {
+                responseDiv.InnerText = ex.Message;
             }
 
         }
